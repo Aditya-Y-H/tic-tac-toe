@@ -1,7 +1,12 @@
-function getBoard() {
+const gameBoard = (() => {
   const columns = 3;
   const rows = 3;
+  const coordinate = coordinateSystem(columns, rows);
   const board = [];
+
+  function setCellValue(coordinates, value) {
+    board[(coordinate.x(), coordinate.y())] = value;
+  }
 
   for (let i = 0; i < columns; i++) {
     board.push([]);
@@ -10,8 +15,8 @@ function getBoard() {
     }
   }
 
-  return board;
-}
+  return { board };
+})();
 
 function playerMaker() {
   let id = 0;
@@ -21,7 +26,7 @@ function playerMaker() {
   };
 }
 
-function CoordinateSystem(columnSize, rowSize) {
+function coordinateSystem(columnSize, rowSize) {
   let _x;
   let _y;
 
@@ -69,7 +74,11 @@ const controller = (() => {
   const player = playerMaker();
   const player1 = player("human", "x");
   const player2 = player("ai", "o");
-  const board = getBoard();
+  const board = gameBoard;
 
-  function markCoordinate(marker, coordinates) {}
+  function markCell(player, coordinates) {
+    board.setCellValue(coordinates, player.id);
+  }
+
+  return { markCell };
 })();
