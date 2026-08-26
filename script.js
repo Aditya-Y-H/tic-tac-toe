@@ -132,37 +132,78 @@ function coordinateSystem(columnSize, rowSize) {
   };
 }
 
+function playerGenerator() {
+  id = 0;
+
+  return function player() {
+    return { id: id++ };
+  };
+}
+
 const controller = (() => {
   // Public
 
-  function checkWinner(lastPlayerCell, lastPlayerId) {
-    const hasPlayerId = (cellValue) => cellValue === lastPlayerId;
-
-    if (gameBoard.horizontal(lastPlayerCell).every(hasPlayerId)) {
-      return lastPlayerId;
+  function executeTurn(coordinate) {
+    markCell(coordinate);
+    if (checkWinner(coordinate) !== null) {
+      return currentPlayer.id;
     }
-    if (gameBoard.vertical(lastPlayerCell).every(hasPlayerId)) {
-      return lastPlayerId;
-    }
-    const [leftDiagonal, rightDiagonal] = gameBoard.diagonals(lastPlayerCell);
-    if (
-      (leftDiagonal.every(hasPlayerId) && leftDiagonal.length > 1) ||
-      (rightDiagonal.every(hasPlayerId) && leftDiagonal.length > 1)
-    ) {
-      return lastPlayerId;
-    }
+    changeTurn();
     return null;
-  }
-
-  function markCell(player, coordinates) {
-    board.setCellValue(coordinates, player);
   }
 
   // Private
 
-  const player1 = 0;
-  const player2 = 1;
+  const playerMaker = playerGenerator();
+
+  const player1 = playerMaker();
+  const player2 = playerMaker();
   const board = gameBoard;
 
-  return { markCell, checkWinner };
+  let currentPlayer = player1;
+
+  function markCell(coordinates) {
+    board.setCellValue(coordinates, currentPlayer.id);
+  }
+
+  function changeTurn() {
+    currentPlayer = currentPlayer.id == 0 ? player2 : player1;
+  }
+
+  function checkWinner(lastPlayerCell) {
+    const hasPlayerId = (cellValue) => cellValue === currentPlayer.id;
+
+    if (gameBoard.horizontal(lastPlayerCell).every(hasPlayerId)) {
+      return currentPlayer.id;
+    }
+    if (gameBoard.vertical(lastPlayerCell).every(hasPlayerId)) {
+      return currentPlayer.id;
+    }
+    const [leftDiagonal, rightDiagonal] = gameBoard.diagonals(lastPlayerCell);
+    if (
+      (leftDiagonal.every(hasPlayerId) && leftDiagonal.length > 1) ||
+      (rightDiagonal.every(hasPlayerId) && rightDiagonal.length > 1)
+    ) {
+      return currentPlayer.id;
+    }
+    return null;
+  }
+
+  return { executeTurn };
 })();
+
+function play() {
+  let winner = null;
+  while (winner === null) {
+    const coordinates = prompt("x y:")
+      .split(" ")
+      .map((coordinate) => Number(coordinate));
+    winner = controller.executeTurn(
+      gameBoard.coordinate(coordinates[0], coordinates[1]),
+    );
+
+    console.table(gameBoard.representation());
+  }
+
+  console.log(winner);
+}
