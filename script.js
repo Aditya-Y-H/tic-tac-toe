@@ -144,19 +144,19 @@ const controller = (() => {
     const hasPlayerId = (cellValue) => cellValue === lastPlayerId;
 
     if (gameBoard.horizontal(lastPlayerCell).every(hasPlayerId)) {
-      winner = lastPlayerId;
-      return;
+      return lastPlayerId;
     }
     if (gameBoard.vertical(lastPlayerCell).every(hasPlayerId)) {
-      winner = lastPlayerId;
-      return;
+      return lastPlayerId;
     }
     const [leftDiagonal, rightDiagonal] = gameBoard.diagonals(lastPlayerCell);
-    if (leftDiagonal.every(hasPlayerId) || rightDiagonal.every(hasPlayerId)) {
-      winner = lastPlayerId;
-      return;
+    if (
+      (leftDiagonal.every(hasPlayerId) && leftDiagonal.length > 1) ||
+      (rightDiagonal.every(hasPlayerId) && leftDiagonal.length > 1)
+    ) {
+      return lastPlayerId;
     }
-    return;
+    return null;
   }
 
   function markCell(player, coordinates) {
@@ -168,7 +168,6 @@ const controller = (() => {
   const player1 = 0;
   const player2 = 1;
   const board = gameBoard;
-  let winner = null;
 
   return { markCell, checkWinner };
 })();
