@@ -31,13 +31,8 @@ const gameBoard = (() => {
   }
 
   function horizontal(coordinates) {
-    // Returns array of values on the same Y axis
-    const horizontalValues = [];
-
-    for (let x = 0; x < _size; x++) {
-      horizontalValues.push(board[coordinates.y()][x]);
-    }
-    return horizontalValues;
+    // Returns array of X values on the same Y axis
+    return board[coordinates.y()];
   }
 
   function vertical(coordinates) {
