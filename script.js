@@ -89,17 +89,8 @@ const gameBoard = (() => {
   };
 })();
 
-function playerMaker() {
-  let id = 0;
-
-  return function createPlayer(name, marker) {
-    return { name, marker, id: id++ };
-  };
-}
-
 function coordinateSystem(columnSize, rowSize) {
-  let _x;
-  let _y;
+  // Public
 
   function x() {
     return _x;
@@ -107,6 +98,11 @@ function coordinateSystem(columnSize, rowSize) {
   function y() {
     return _y;
   }
+
+  // Private
+
+  let _x;
+  let _y;
 
   return function coords(x_coordinates, y_coordinates) {
     if (
@@ -173,19 +169,6 @@ const controller = (() => {
   const player2 = 1;
   const board = gameBoard;
   let winner = null;
-
-  function checkStreak(start, end, id) {
-    streak = true;
-    for (let x = start.x(); x < end.x() + 1; x++) {
-      for (let y = start.y(); y < end.y() + 1; y++) {
-        const coordinates = board.coordinate(x, y);
-        if (!(board.selectCell(coordinates) === id)) {
-          return false;
-        }
-      }
-    }
-    return streak;
-  }
 
   return { markCell, checkWinner };
 })();
