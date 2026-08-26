@@ -1,21 +1,92 @@
 const gameBoard = (() => {
-  const columns = 3;
-  const rows = 3;
-  const coordinate = coordinateSystem(columns, rows);
+  // Private
+  const _size = 3;
   const board = [];
 
-  function setCellValue(coordinates, value) {
-    board[(coordinate.x(), coordinate.y())] = value;
-  }
-
-  for (let i = 0; i < columns; i++) {
-    board.push([]);
-    for (let j = 0; j < rows; j++) {
-      board[i].push("");
+  function makeBoard() {
+    for (let x = 0; x < _size; x++) {
+      board.push([]);
+      for (let y = 0; y < _size; y++) {
+        board[x].push(null);
+      }
     }
   }
 
-  return { board };
+  makeBoard();
+
+  // Public
+
+  const coordinate = coordinateSystem(_size, _size);
+
+  function representation() {
+    return board;
+  }
+
+  function setCellValue(coordinates, value) {
+    board[coordinates.y()][coordinates.x()] = value;
+  }
+
+  function selectCell(coordinates) {
+    return board[coordinates.y()][coordinates.x()];
+  }
+
+  function horizontal(coordinates) {
+    // Returns array of values on the same Y axis
+    const horizontalValues = [];
+
+    for (let x = 0; x < _size; x++) {
+      horizontalValues.push(board[coordinates.y()][x]);
+    }
+    return horizontalValues;
+  }
+
+  function vertical(coordinates) {
+    const verticalValues = [];
+
+    for (let y = 0; y < _size; y++) {
+      verticalValues.push(board[y][coordinates.x()]);
+    }
+    return verticalValues;
+  }
+
+  function diagonals(coordinates) {
+    const hasBothDiagonals =
+      _size - coordinates.x() === _size - 1 &&
+      _size - coordinates.y() === _size - 1;
+    const hasLeftDiagonal =
+      _size - coordinates.x() === _size || hasBothDiagonals;
+    const hasRightDiaongal = _size - coordinates.x() === 1 || hasBothDiagonals;
+
+    const leftDiagonalValues = [];
+    if (hasLeftDiagonal) {
+      for (let xy = 0; xy < _size; xy++) {
+        leftDiagonalValues.push(board[xy][xy]);
+      }
+    }
+    const rightDiagonalValues = [];
+    if (hasRightDiaongal) {
+      for (let i = 0; i < _size; i++) {
+        rightDiagonalValues.push(board[_size - 1 - i][i]);
+      }
+    }
+
+    return [leftDiagonalValues, rightDiagonalValues];
+  }
+
+  function size() {
+    return _size;
+  }
+
+  return {
+    selectCell,
+    setCellValue,
+    size,
+    coordinate,
+    horizontal,
+    vertical,
+    diagonals,
+    representation,
+  };
 })();
 
 function playerMaker() {
@@ -71,14 +142,50 @@ function coordinateSystem(columnSize, rowSize) {
 }
 
 const controller = (() => {
-  const player = playerMaker();
-  const player1 = player("human", "x");
-  const player2 = player("ai", "o");
-  const board = gameBoard;
+  // Public
 
-  function markCell(player, coordinates) {
-    board.setCellValue(coordinates, player.id);
+  function checkWinner(lastPlayerCell, lastPlayerId) {
+    const hasPlayerId = (cellValue) => cellValue === lastPlayerId;
+
+    if (gameBoard.horizontal(lastPlayerCell).every(hasPlayerId)) {
+      winner = lastPlayerId;
+      return;
+    }
+    if (gameBoard.vertical(lastPlayerCell).every(hasPlayerId)) {
+      winner = lastPlayerId;
+      return;
+    }
+    const [leftDiagonal, rightDiagonal] = gameBoard.diagonals(lastPlayerCell);
+    if (leftDiagonal.every(hasPlayerId) || rightDiagonal.every(hasPlayerId)) {
+      winner = lastPlayerId;
+      return;
+    }
+    return;
   }
 
-  return { markCell };
+  function markCell(player, coordinates) {
+    board.setCellValue(coordinates, player);
+  }
+
+  // Private
+
+  const player1 = 0;
+  const player2 = 1;
+  const board = gameBoard;
+  let winner = null;
+
+  function checkStreak(start, end, id) {
+    streak = true;
+    for (let x = start.x(); x < end.x() + 1; x++) {
+      for (let y = start.y(); y < end.y() + 1; y++) {
+        const coordinates = board.coordinate(x, y);
+        if (!(board.selectCell(coordinates) === id)) {
+          return false;
+        }
+      }
+    }
+    return streak;
+  }
+
+  return { markCell, checkWinner };
 })();
