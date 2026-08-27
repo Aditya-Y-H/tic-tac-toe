@@ -62,7 +62,7 @@ const gameBoard = (() => {
     const rightDiagonalValues = [];
     if (hasRightDiaongal) {
       for (let i = 0; i < _size; i++) {
-        rightDiagonalValues.push(board[_size - 1 - i][i]);
+        rightDiagonalValues.push(board[_size - 1 - i][_size - 1 - i]);
       }
     }
 
@@ -306,8 +306,11 @@ function promptInput() {
   );
 }
 
+const human = createPlayer("human", promptInput);
+const aiPlayer = createPlayer("ai");
+
 function play() {
-  controller.init(createPlayer("ai1"), createPlayer("ai2"));
+  controller.init(human, aiPlayer);
   let result = Result.ONGOING;
   while (result === Result.ONGOING) {
     while (!controller.executeTurn()) {
