@@ -1,9 +1,10 @@
 const gameBoard = (() => {
   // Private
   const _size = 3;
-  const board = [];
+  let board = [];
 
   function makeBoard() {
+    board = [];
     for (let x = 0; x < _size; x++) {
       board.push([]);
       for (let y = 0; y < _size; y++) {
@@ -73,6 +74,7 @@ const gameBoard = (() => {
   }
 
   return {
+    makeBoard,
     selectCell,
     setCellValue,
     size,
@@ -83,6 +85,36 @@ const gameBoard = (() => {
     representation,
   };
 })();
+
+const ai = (() => {
+  const maxX = gameBoard.size();
+  const maxY = gameBoard.size();
+  function randomMove() {
+    let coordinate = null;
+    do {
+      coordinate = gameBoard.coordinate(
+        Math.floor(Math.random() * maxX),
+        Math.floor(Math.random() * maxY),
+      );
+    } while (gameBoard.selectCell(coordinate) !== null);
+    return coordinate;
+  }
+
+  return { randomMove };
+})();
+
+function play() {
+  let winner = null;
+  while (winner === null) {
+    while (!controller.executeTurn(promptInput)) {
+      console.log("Cell has already been marked!");
+    }
+    winner = controller.resolveTurn();
+    console.table(gameBoard.representation());
+  }
+
+  console.log(winner);
+}
 
 function coordinateSystem(columnSize, rowSize) {
   // Public
@@ -133,40 +165,103 @@ function coordinateSystem(columnSize, rowSize) {
 }
 
 function playerGenerator() {
-  id = 0;
+  let _id = 0;
+  const defaultInputMethod = ai.randomMove.bind(ai);
 
-  return function player() {
-    return { id: id++ };
+  return function createPlayer(playerName, inputMethod = defaultInputMethod) {
+    const id = _id++;
+    const name = playerName ?? "player" + id;
+
+    function representation() {
+      return `${id} | ${name}`;
+    }
+    return Object.freeze({
+      id,
+      name,
+      inputMethod,
+      representation,
+    });
   };
 }
+
+const createPlayer = playerGenerator();
+
+const Result = {
+  WIN: "WIN",
+  TIE: "TIE",
+  ONGOING: "ONGOING",
+};
 
 const controller = (() => {
   // Public
 
-  function executeTurn(inputMethod) {
-    let coordinates = inputMethod();
+  function executeTurn() {
+    const coordinates = currentPlayer.inputMethod();
     if (!markCell(coordinates)) {
       return false;
     }
     lastPlayedCell = coordinates;
+    availableTurns--;
     return true;
   }
 
   function resolveTurn() {
-    return checkWinner();
+    if (checkWinner()) {
+      _winner = currentPlayer;
+      return Result.WIN;
+    }
+    if (availableTurns <= 0) {
+      return Result.TIE;
+    }
+    changeTurn();
+    console.log(currentPlayer.representation());
+    return Result.ONGOING;
+  }
+
+  function winner() {
+    return _winner;
+  }
+
+  function init(customPlayer1, customPlayer2) {
+    board.makeBoard();
+
+    player1 = customPlayer1 ?? createPlayer();
+    player2 = customPlayer2 ?? createPlayer();
+
+    currentPlayer = player1;
+
+    lastPlayedCell = null;
+
+    availableTurns = board.size() * board.size();
+
+    _winner = null;
+  }
+
+  function setPlayer1(firstPlayer) {
+    player1 = firstPlayer;
+  }
+  function setPlayer2(secondPlayer) {
+    player2 = secondPlayer;
+  }
+
+  function players() {
+    return { player1: player1.id, player2: player2.id };
   }
 
   // Private
 
-  const playerMaker = playerGenerator();
-
-  const player1 = playerMaker();
-  const player2 = playerMaker();
   const board = gameBoard;
 
-  let currentPlayer = player1;
+  let player1;
+  let player2;
 
-  let lastPlayedCell = null;
+  let currentPlayer;
+
+  let lastPlayedCell;
+
+  let availableTurns;
+
+  let _winner;
 
   // Returns false if already marked.
   function markCell(coordinates) {
@@ -178,29 +273,29 @@ const controller = (() => {
   }
 
   function changeTurn() {
-    currentPlayer = currentPlayer.id == 0 ? player2 : player1;
+    currentPlayer = currentPlayer.id == player1.id ? player2 : player1;
   }
 
   function checkWinner() {
     const hasPlayerId = (cellValue) => cellValue === currentPlayer.id;
 
     if (gameBoard.horizontal(lastPlayedCell).every(hasPlayerId)) {
-      return currentPlayer.id;
+      return true;
     }
     if (gameBoard.vertical(lastPlayedCell).every(hasPlayerId)) {
-      return currentPlayer.id;
+      return true;
     }
     const [leftDiagonal, rightDiagonal] = gameBoard.diagonals(lastPlayedCell);
     if (
       (leftDiagonal.every(hasPlayerId) && leftDiagonal.length > 1) ||
       (rightDiagonal.every(hasPlayerId) && rightDiagonal.length > 1)
     ) {
-      return currentPlayer.id;
+      return true;
     }
-    return null;
+    return false;
   }
 
-  return { executeTurn, resolveTurn };
+  return { executeTurn, resolveTurn, players, winner, init };
 })();
 
 function promptInput() {
@@ -211,19 +306,27 @@ function promptInput() {
   );
 }
 
-function displayError(message) {
-  console.log(message);
-}
-
 function play() {
-  let winner = null;
-  while (winner === null) {
-    while (!controller.executeTurn(promptInput)) {
+  controller.init(createPlayer("ai1"), createPlayer("ai2"));
+  let result = Result.ONGOING;
+  while (result === Result.ONGOING) {
+    while (!controller.executeTurn()) {
       console.log("Cell has already been marked!");
     }
-    winner = controller.resolveTurn();
+    result = controller.resolveTurn();
     console.table(gameBoard.representation());
+    console.log(result);
   }
 
-  console.log(winner);
+  switch (result) {
+    case Result.WIN:
+      console.log(`${controller.winner().representation()} has won the game!`);
+      break;
+    case Result.TIE:
+      console.log("Tie!");
+      break;
+    default:
+      throw Error(`An unexpected result has occurred: ${result}`);
+  }
+  console.log("end");
 }
