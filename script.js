@@ -197,14 +197,8 @@ const Result = {
 const controller = (() => {
   // Public
 
-  function executeTurn() {
-    const coordinates = currentPlayer.inputMethod();
-    if (!markCell(coordinates)) {
-      return false;
-    }
-    lastPlayedCell = coordinates;
-    availableTurns--;
-    return true;
+  function makeMove() {
+    return currentPlayer.inputMethod();
   }
 
   function resolveTurn() {
@@ -215,8 +209,6 @@ const controller = (() => {
     if (availableTurns <= 0) {
       return Result.TIE;
     }
-    changeTurn();
-    console.log(currentPlayer.representation());
     return Result.ONGOING;
   }
 
@@ -239,15 +231,8 @@ const controller = (() => {
     _winner = null;
   }
 
-  function setPlayer1(firstPlayer) {
-    player1 = firstPlayer;
-  }
-  function setPlayer2(secondPlayer) {
-    player2 = secondPlayer;
-  }
-
-  function players() {
-    return { player1: player1.id, player2: player2.id };
+  function finishTurn() {
+    currentPlayer = currentPlayer.id == player1.id ? player2 : player1;
   }
 
   // Private
@@ -271,11 +256,9 @@ const controller = (() => {
       return false;
     }
     board.setCellValue(coordinates, currentPlayer.id);
+    lastPlayedCell = coordinates;
+    availableTurns--;
     return true;
-  }
-
-  function changeTurn() {
-    currentPlayer = currentPlayer.id == player1.id ? player2 : player1;
   }
 
   function checkWinner() {
@@ -297,7 +280,7 @@ const controller = (() => {
     return false;
   }
 
-  return { executeTurn, resolveTurn, players, winner, init };
+  return { makeMove, resolveTurn, finishTurn, players, winner, init };
 })();
 
 function promptInput() {
@@ -340,6 +323,42 @@ function play() {
 
 // DOMInteraction
 
-const form = document.querySelector(".selection form");
+function playGame(player1, player2, display) {
+  controller.init(player1, player2);
+  let result = Result.ONGOING;
+  while (result === Result.ONGOING) {
+    let legalMove = false;
+    while (!legalMove) {
+      const coordinates = controller.makeMove();
+      legalMove = controller.markCell(coordinates);
+      if (!legalMove) {
+        display.warn("Cell was already marked!");
+      } else {
+        display.markCell(coordinates);
+      }
+    }
+    result = controller.resolveTurn();
+    controller.finishTurn();
+  }
 
-console.log(form.elements["player-2-name-input"]);
+  switch (result) {
+    case Result.WIN:
+      display.declareWinner(controller.winner());
+      break;
+    case Result.TIE:
+      display.declareTie();
+      break;
+    default:
+      throw new Error(`Unexpected result: ${result}`);
+  }
+}
+
+const form = document.querySelector(".selection form");
+const playBtn = document.getElementById("play-btn");
+
+playBtn.addEventListener("click", (event) => {
+  const name1 = form.elements["player-1-name-input"].value;
+  const name2 = form.elements["player-2-name-input"].value;
+  const type1 = form.elements["player-1-player-type"].value;
+  const type2 = form.elements["player-2-player-type"].value;
+});
