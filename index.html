@@ -3,8 +3,76 @@
   <head>
     <meta charset="UTF-8" />
     <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tic Tac Toe</title>
   </head>
-  <body></body>
+  <body>
+    <div class="game-bar">
+      <div class="selection">
+        <form action="">
+          <div class="sub-form-container">
+            <div class="input-container">
+              <label for="player-1-name-input">Name</label>
+              <input id="player-1-name-input" class="name-input" type="text" />
+            </div>
+            <div class="input-container">
+              <label for="player-1-player-type">Type</label>
+              <select name="player-1-player-type" id="player-1-player-type">
+                <option value="human">Human</option>
+                <option value="ai">AI</option>
+              </select>
+            </div>
+          </div>
+          <div class="sub-form-container">
+            <div class="input-container">
+              <label for="player-2-name-input">Name</label>
+              <input id="player-2-name-input" class="name-input" type="text" />
+            </div>
+            <div class="input-container">
+              <label for="player-2-player-type">Type</label>
+              <select name="player-2-player-type" id="player-2-player-type">
+                <option value="human">Human</option>
+                <option value="ai">AI</option>
+              </select>
+            </div>
+          </div>
+          <button class="sub-form-container" type="submit">Play</button>
+        </form>
+      </div>
+      <div class="game">
+        <div class="game-board">
+          <button class="cell">
+            <div class="marker circle"></div>
+          </button>
+          <button class="cell">
+            <div class="marker cross"></div>
+          </button>
+          <button class="cell">
+            <div class="marker"></div>
+          </button>
+
+          <button class="cell">
+            <div class="marker"></div>
+          </button>
+          <button class="cell">
+            <div class="marker"></div>
+          </button>
+          <button class="cell">
+            <div class="marker"></div>
+          </button>
+
+          <button class="cell">
+            <div class="marker"></div>
+          </button>
+          <button class="cell">
+            <div class="marker"></div>
+          </button>
+          <button class="cell">
+            <div class="marker"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
