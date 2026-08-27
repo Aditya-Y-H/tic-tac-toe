@@ -143,13 +143,17 @@ function playerGenerator() {
 const controller = (() => {
   // Public
 
-  function executeTurn(coordinate) {
-    markCell(coordinate);
-    if (checkWinner(coordinate) !== null) {
-      return currentPlayer.id;
+  function executeTurn(inputMethod) {
+    let coordinates = inputMethod();
+    if (!markCell(coordinates)) {
+      return false;
     }
-    changeTurn();
-    return null;
+    lastPlayedCell = coordinates;
+    return true;
+  }
+
+  function resolveTurn() {
+    return checkWinner();
   }
 
   // Private
@@ -162,24 +166,31 @@ const controller = (() => {
 
   let currentPlayer = player1;
 
+  let lastPlayedCell = null;
+
+  // Returns false if already marked.
   function markCell(coordinates) {
+    if (board.selectCell(coordinates) !== null) {
+      return false;
+    }
     board.setCellValue(coordinates, currentPlayer.id);
+    return true;
   }
 
   function changeTurn() {
     currentPlayer = currentPlayer.id == 0 ? player2 : player1;
   }
 
-  function checkWinner(lastPlayerCell) {
+  function checkWinner() {
     const hasPlayerId = (cellValue) => cellValue === currentPlayer.id;
 
-    if (gameBoard.horizontal(lastPlayerCell).every(hasPlayerId)) {
+    if (gameBoard.horizontal(lastPlayedCell).every(hasPlayerId)) {
       return currentPlayer.id;
     }
-    if (gameBoard.vertical(lastPlayerCell).every(hasPlayerId)) {
+    if (gameBoard.vertical(lastPlayedCell).every(hasPlayerId)) {
       return currentPlayer.id;
     }
-    const [leftDiagonal, rightDiagonal] = gameBoard.diagonals(lastPlayerCell);
+    const [leftDiagonal, rightDiagonal] = gameBoard.diagonals(lastPlayedCell);
     if (
       (leftDiagonal.every(hasPlayerId) && leftDiagonal.length > 1) ||
       (rightDiagonal.every(hasPlayerId) && rightDiagonal.length > 1)
@@ -189,19 +200,28 @@ const controller = (() => {
     return null;
   }
 
-  return { executeTurn };
+  return { executeTurn, resolveTurn };
 })();
+
+function promptInput() {
+  return gameBoard.coordinate(
+    ...prompt("x y:")
+      .split(" ")
+      .map((coordinate) => Number(coordinate)),
+  );
+}
+
+function displayError(message) {
+  console.log(message);
+}
 
 function play() {
   let winner = null;
   while (winner === null) {
-    const coordinates = prompt("x y:")
-      .split(" ")
-      .map((coordinate) => Number(coordinate));
-    winner = controller.executeTurn(
-      gameBoard.coordinate(coordinates[0], coordinates[1]),
-    );
-
+    while (!controller.executeTurn(promptInput)) {
+      console.log("Cell has already been marked!");
+    }
+    winner = controller.resolveTurn();
     console.table(gameBoard.representation());
   }
 
