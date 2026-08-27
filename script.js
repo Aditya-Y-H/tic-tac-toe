@@ -1,3 +1,5 @@
+// Game Engine
+
 const gameBoard = (() => {
   // Private
   const _size = 3;
@@ -306,6 +308,8 @@ function promptInput() {
   );
 }
 
+// Intermediary
+
 const human = createPlayer("human", promptInput);
 const aiPlayer = createPlayer("ai");
 
@@ -333,3 +337,9 @@ function play() {
   }
   console.log("end");
 }
+
+// DOMInteraction
+
+const form = document.querySelector(".selection form");
+
+console.log(form.elements["player-2-name-input"]);
