@@ -442,17 +442,25 @@ const form = document.querySelector(".selection form");
 const playBtn = document.getElementById("play-btn");
 
 playBtn.addEventListener("click", async (event) => {
-  event.preventDefault();
-
   const name1 = form.elements["player-1-name-input"].value;
   const name2 = form.elements["player-2-name-input"].value;
   const type1 = form.elements["player-1-player-type"].value;
   const type2 = form.elements["player-2-player-type"].value;
 
-  const generatePlayer = playerGenerator(ai.randomMove);
+  const generatePlayer = playerGenerator(null);
 
-  const player1 = generatePlayer(name1, Marker.O, guiInput.clickMethod);
-  const player2 = generatePlayer(name2, Marker.X);
+  const player1 = generatePlayer(
+    name1,
+    Marker.O,
+    type1 === "human" ? guiInput.clickMethod : ai.randomMove,
+  );
+  const player2 = generatePlayer(
+    name2,
+    Marker.X,
+    type2 === "human" ? guiInput.clickMethod : ai.randomMove,
+  );
+
+  event.preventDefault();
 
   await playGame(player1, player2, display);
 });
