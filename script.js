@@ -166,13 +166,29 @@ function coordinateSystem(columnSize, rowSize) {
   };
 }
 
-function playerGenerator() {
+function playerGenerator(defaultInputMethod) {
   let _id = 0;
-  const defaultInputMethod = ai.randomMove.bind(ai);
 
-  return function createPlayer(playerName, inputMethod = defaultInputMethod) {
+  const playerIds = new Set();
+  const playerMarkers = new Set();
+
+  return function createPlayer(
+    playerName,
+    playerMarker,
+    inputMethod = defaultInputMethod,
+  ) {
     const id = _id++;
     const name = playerName ?? "player" + id;
+    const marker = playerMarker;
+
+    if (playerMarkers.has(marker)) {
+      throw new Error(`Marker must be unique: ${marker}`);
+    }
+    playerMarkers.add(marker);
+    if (playerIds.has(marker)) {
+      throw new Error(`Id value was not unique: ${id}`);
+    }
+    playerIds.add(id);
 
     function representation() {
       return `${id} | ${name}`;
@@ -180,18 +196,24 @@ function playerGenerator() {
     return Object.freeze({
       id,
       name,
+      marker,
       inputMethod,
       representation,
     });
   };
 }
 
-const createPlayer = playerGenerator();
+const createPlayer = playerGenerator(ai.randomMove.bind(ai));
 
 const Result = {
   WIN: "WIN",
   TIE: "TIE",
   ONGOING: "ONGOING",
+};
+
+const Marker = {
+  O: "circle",
+  X: "cross",
 };
 
 const controller = (() => {
@@ -214,6 +236,10 @@ const controller = (() => {
 
   function winner() {
     return _winner;
+  }
+
+  function currentMarker() {
+    return currentPlayer.marker;
   }
 
   function init(customPlayer1, customPlayer2) {
@@ -280,7 +306,15 @@ const controller = (() => {
     return false;
   }
 
-  return { makeMove, resolveTurn, finishTurn, players, winner, init };
+  return {
+    makeMove,
+    markCell,
+    resolveTurn,
+    finishTurn,
+    winner,
+    init,
+    currentMarker,
+  };
 })();
 
 function promptInput() {
@@ -324,6 +358,7 @@ function play() {
 // DOMInteraction
 
 function playGame(player1, player2, display) {
+  display.clear();
   controller.init(player1, player2);
   let result = Result.ONGOING;
   while (result === Result.ONGOING) {
@@ -334,7 +369,7 @@ function playGame(player1, player2, display) {
       if (!legalMove) {
         display.warn("Cell was already marked!");
       } else {
-        display.markCell(coordinates);
+        display.markCell(controller.currentMarker(), coordinates);
       }
     }
     result = controller.resolveTurn();
@@ -343,7 +378,7 @@ function playGame(player1, player2, display) {
 
   switch (result) {
     case Result.WIN:
-      display.declareWinner(controller.winner());
+      display.declareWinner(controller.winner().name);
       break;
     case Result.TIE:
       display.declareTie();
@@ -353,6 +388,57 @@ function playGame(player1, player2, display) {
   }
 }
 
+const cells = (() => {
+  const elements = {};
+
+  for (let x = 0; x < gameBoard.size(); x++) {
+    for (let y = 0; y < gameBoard.size(); y++) {
+      elements[`${x} ${y}`] = document.querySelector(
+        `.cell.x-${x}.y-${y} .marker`,
+      );
+    }
+  }
+
+  function select(coordinates) {
+    return elements[`${coordinates.x()} ${coordinates.y()}`];
+  }
+
+  function all() {
+    return Object.values(elements);
+  }
+
+  return { select, all };
+})();
+
+const display = (() => {
+  function markCell(marker, coordinates) {
+    cells.select(coordinates).classList.add(marker);
+  }
+
+  function clear() {
+    cells.all().forEach((cell) => {
+      cell.classList.remove(Marker.O);
+      cell.classList.remove(Marker.X);
+    });
+  }
+
+  function declareWinner(winner) {
+    console.log(winner);
+    alert(`${winner} has won the game!`);
+  }
+
+  function declareTie() {
+    console.log("tie");
+    alert("The game tied.");
+  }
+
+  function warn(warning) {
+    alert(warning);
+  }
+
+  return { markCell, clear, declareWinner, declareTie, warn };
+})();
+
 const form = document.querySelector(".selection form");
 const playBtn = document.getElementById("play-btn");
 
@@ -361,4 +447,12 @@ playBtn.addEventListener("click", (event) => {
   const name2 = form.elements["player-2-name-input"].value;
   const type1 = form.elements["player-1-player-type"].value;
   const type2 = form.elements["player-2-player-type"].value;
+
+  const generatePlayer = playerGenerator(ai.randomMove);
+
+  const player1 = generatePlayer(name1, Marker.O);
+  const player2 = generatePlayer(name2, Marker.X);
+
+  playGame(player1, player2, display);
+  event.preventDefault();
 });
