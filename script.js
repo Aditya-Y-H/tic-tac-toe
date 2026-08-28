@@ -206,8 +206,6 @@ function playerGenerator(defaultInputMethod) {
   };
 }
 
-const createPlayer = playerGenerator(ai.randomMove.bind(ai));
-
 const Result = {
   WIN: "WIN",
   TIE: "TIE",
@@ -248,8 +246,8 @@ const controller = (() => {
   function init(customPlayer1, customPlayer2) {
     board.makeBoard();
 
-    player1 = customPlayer1 ?? createPlayer();
-    player2 = customPlayer2 ?? createPlayer();
+    player1 = customPlayer1;
+    player2 = customPlayer2;
 
     currentPlayer = player1;
 
@@ -320,45 +318,7 @@ const controller = (() => {
   };
 })();
 
-function promptInput() {
-  return gameBoard.coordinate(
-    ...prompt("x y:")
-      .split(" ")
-      .map((coordinate) => Number(coordinate)),
-  );
-}
-
 // Intermediary
-
-const human = createPlayer("human", promptInput);
-const aiPlayer = createPlayer("ai");
-
-function play() {
-  controller.init(human, aiPlayer);
-  let result = Result.ONGOING;
-  while (result === Result.ONGOING) {
-    while (!controller.executeTurn()) {
-      console.log("Cell has already been marked!");
-    }
-    result = controller.resolveTurn();
-    console.table(gameBoard.representation());
-    console.log(result);
-  }
-
-  switch (result) {
-    case Result.WIN:
-      console.log(`${controller.winner().representation()} has won the game!`);
-      break;
-    case Result.TIE:
-      console.log("Tie!");
-      break;
-    default:
-      throw Error(`An unexpected result has occurred: ${result}`);
-  }
-  console.log("end");
-}
-
-// DOMInteraction
 
 async function playGame(player1, player2, display) {
   display.clear();
@@ -392,6 +352,8 @@ async function playGame(player1, player2, display) {
       throw new Error(`Unexpected result: ${result}`);
   }
 }
+
+// DOMInteraction
 
 const cells = (() => {
   const elements = {};
