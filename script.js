@@ -49,7 +49,7 @@ const gameBoard = (() => {
 
   function diagonals(coordinates) {
     const hasLeftDiagonal = coordinates.x() - coordinates.y() === 0;
-    const hasRightDiaongal = coordinates.x() + coordinates.y() === _size;
+    const hasRightDiaongal = coordinates.x() + coordinates.y() === _size - 1;
     const leftDiagonalValues = [];
     if (hasLeftDiagonal) {
       for (let xy = 0; xy < _size; xy++) {
