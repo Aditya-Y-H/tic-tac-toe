@@ -48,13 +48,8 @@ const gameBoard = (() => {
   }
 
   function diagonals(coordinates) {
-    const hasBothDiagonals =
-      _size - coordinates.x() === _size - 1 &&
-      _size - coordinates.y() === _size - 1;
-    const hasLeftDiagonal =
-      _size - coordinates.x() === _size || hasBothDiagonals;
-    const hasRightDiaongal = _size - coordinates.x() === 1 || hasBothDiagonals;
-
+    const hasLeftDiagonal = coordinates.x() - coordinates.y() === 0;
+    const hasRightDiaongal = coordinates.x() + coordinates.y() === _size;
     const leftDiagonalValues = [];
     if (hasLeftDiagonal) {
       for (let xy = 0; xy < _size; xy++) {
@@ -64,7 +59,7 @@ const gameBoard = (() => {
     const rightDiagonalValues = [];
     if (hasRightDiaongal) {
       for (let i = 0; i < _size; i++) {
-        rightDiagonalValues.push(board[_size - 1 - i][_size - 1 - i]);
+        rightDiagonalValues.push(board[_size - 1 - i][i]);
       }
     }
 
