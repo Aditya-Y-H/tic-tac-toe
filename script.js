@@ -377,6 +377,43 @@ const cells = (() => {
   return { select, all };
 })();
 
+const board = document.querySelector(".game-board");
+
+const guiInput = (() => {
+  let clickResolver = null;
+
+  function click(coordinates) {
+    if (clickResolver !== null) {
+      const resolve = clickResolver;
+      clickResolver = null;
+      resolve(coordinates);
+    }
+  }
+
+  function clickListener() {
+    return new Promise((resolve) => (clickResolver = resolve));
+  }
+
+  async function clickMethod() {
+    const coordinates = await clickListener();
+    return coordinates;
+  }
+
+  return { clickMethod, click };
+})();
+
+board.addEventListener("click", (event) => {
+  if (!event.target.classList.contains("cell")) {
+    return;
+  }
+  guiInput.click(
+    gameBoard.coordinate(
+      parseInt(event.target.getAttribute("x")),
+      parseInt(event.target.getAttribute("y")),
+    ),
+  );
+});
+
 const display = (() => {
   function markCell(marker, coordinates) {
     cells.select(coordinates).classList.add(marker);
@@ -419,7 +456,7 @@ playBtn.addEventListener("click", async (event) => {
 
   const generatePlayer = playerGenerator(ai.randomMove);
 
-  const player1 = generatePlayer(name1, Marker.O);
+  const player1 = generatePlayer(name1, Marker.O, guiInput.clickMethod);
   const player2 = generatePlayer(name2, Marker.X);
 
   await playGame(player1, player2, display);
