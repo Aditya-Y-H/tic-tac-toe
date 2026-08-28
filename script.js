@@ -91,7 +91,9 @@ const gameBoard = (() => {
 const ai = (() => {
   const maxX = gameBoard.size();
   const maxY = gameBoard.size();
-  function randomMove() {
+
+  let waitTime = 500;
+  async function randomMove() {
     let coordinate = null;
     do {
       coordinate = gameBoard.coordinate(
@@ -99,10 +101,11 @@ const ai = (() => {
         Math.floor(Math.random() * maxY),
       );
     } while (gameBoard.selectCell(coordinate) !== null);
+    await new Promise((r) => setTimeout(r, waitTime));
     return coordinate;
   }
 
-  return { randomMove };
+  return { randomMove, waitTime };
 })();
 
 function play() {
@@ -219,7 +222,7 @@ const Marker = {
 const controller = (() => {
   // Public
 
-  function makeMove() {
+  async function makeMove() {
     return currentPlayer.inputMethod();
   }
 
@@ -357,14 +360,14 @@ function play() {
 
 // DOMInteraction
 
-function playGame(player1, player2, display) {
+async function playGame(player1, player2, display) {
   display.clear();
   controller.init(player1, player2);
   let result = Result.ONGOING;
   while (result === Result.ONGOING) {
     let legalMove = false;
     while (!legalMove) {
-      const coordinates = controller.makeMove();
+      const coordinates = await controller.makeMove();
       legalMove = controller.markCell(coordinates);
       if (!legalMove) {
         display.warn("Cell was already marked!");
@@ -375,6 +378,8 @@ function playGame(player1, player2, display) {
     result = controller.resolveTurn();
     controller.finishTurn();
   }
+
+  await new Promise((r) => setTimeout(r, 200));
 
   switch (result) {
     case Result.WIN:
@@ -442,7 +447,9 @@ const display = (() => {
 const form = document.querySelector(".selection form");
 const playBtn = document.getElementById("play-btn");
 
-playBtn.addEventListener("click", (event) => {
+playBtn.addEventListener("click", async (event) => {
+  event.preventDefault();
+
   const name1 = form.elements["player-1-name-input"].value;
   const name2 = form.elements["player-2-name-input"].value;
   const type1 = form.elements["player-1-player-type"].value;
@@ -453,6 +460,5 @@ playBtn.addEventListener("click", (event) => {
   const player1 = generatePlayer(name1, Marker.O);
   const player2 = generatePlayer(name2, Marker.X);
 
-  playGame(player1, player2, display);
-  event.preventDefault();
+  await playGame(player1, player2, display);
 });
